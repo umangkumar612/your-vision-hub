@@ -39,6 +39,15 @@ const Dashboard = () => {
     });
   }, [tasks, search, statusFilter, operationFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / PAGE_SIZE));
+  const paginatedTasks = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredTasks.slice(start, start + PAGE_SIZE);
+  }, [filteredTasks, page]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, statusFilter, operationFilter]);
+
   const handleRun = (taskId: string) => {
     runTask(taskId);
     toast({ title: 'Task started', description: 'Processing has begun.' });
