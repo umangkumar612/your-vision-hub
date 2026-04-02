@@ -12,12 +12,15 @@ import { OPERATION_LABELS, type Task, type Operation, type TaskStatus } from '@/
 import { Play, Eye, Search } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
+const PAGE_SIZE = 10;
+
 const Dashboard = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [operationFilter, setOperationFilter] = useState<Operation | 'all'>('all');
+  const [page, setPage] = useState(1);
 
   const refresh = useCallback(() => {
     if (user) setTasks(getUserTasks(user.id));
@@ -37,6 +40,15 @@ const Dashboard = () => {
       return true;
     });
   }, [tasks, search, statusFilter, operationFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / PAGE_SIZE));
+  const paginatedTasks = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filteredTasks.slice(start, start + PAGE_SIZE);
+  }, [filteredTasks, page]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, statusFilter, operationFilter]);
 
   const handleRun = (taskId: string) => {
     runTask(taskId);
@@ -108,7 +120,7 @@ const Dashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTasks.map(task => (
+              {paginatedTasks.map(task => (
                 <TableRow key={task.id}>
                   <TableCell className="font-medium">{task.title}</TableCell>
                   <TableCell>{OPERATION_LABELS[task.operation]}</TableCell>
@@ -130,6 +142,38 @@ const Dashboard = () => {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {filteredTasks.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredTasks.length)} of {filteredTasks.length}
+          </p>
+          <div className="flex gap-1">
+            <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+              Previous
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+              .reduce<(number | '...')[]>((acc, p, i, arr) => {
+                if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                p === '...' ? (
+                  <span key={`ellipsis-${i}`} className="px-2 text-sm text-muted-foreground self-center">…</span>
+                ) : (
+                  <Button key={p} size="sm" variant={p === page ? 'default' : 'outline'} onClick={() => setPage(p as number)}>
+                    {p}
+                  </Button>
+                )
+              )}
+            <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>
