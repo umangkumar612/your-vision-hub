@@ -118,7 +118,7 @@ const Dashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTasks.map(task => (
+              {paginatedTasks.map(task => (
                 <TableRow key={task.id}>
                   <TableCell className="font-medium">{task.title}</TableCell>
                   <TableCell>{OPERATION_LABELS[task.operation]}</TableCell>
