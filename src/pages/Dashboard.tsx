@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [operationFilter, setOperationFilter] = useState<Operation | 'all'>('all');
+  const [page, setPage] = useState(1);
 
   const refresh = useCallback(() => {
     if (user) setTasks(getUserTasks(user.id));
