@@ -12,6 +12,8 @@ import { OPERATION_LABELS, type Task, type Operation, type TaskStatus } from '@/
 import { Play, Eye, Search } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
+const PAGE_SIZE = 10;
+
 const Dashboard = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -140,6 +142,38 @@ const Dashboard = () => {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {filteredTasks.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredTasks.length)} of {filteredTasks.length}
+          </p>
+          <div className="flex gap-1">
+            <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+              Previous
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+              .reduce<(number | '...')[]>((acc, p, i, arr) => {
+                if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                p === '...' ? (
+                  <span key={`ellipsis-${i}`} className="px-2 text-sm text-muted-foreground self-center">…</span>
+                ) : (
+                  <Button key={p} size="sm" variant={p === page ? 'default' : 'outline'} onClick={() => setPage(p as number)}>
+                    {p}
+                  </Button>
+                )
+              )}
+            <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>
